@@ -8,12 +8,7 @@ import SignIn from '../Components/SignIn/SignIn';
 import Register from '../Components/Register/Register';
 import 'tachyons';
 import Particles from 'react-tsparticles';
-import Clarifai from 'clarifai';
 import { Component } from 'react';
-
-const app = new Clarifai.App({
-  apiKey: 'cb453aebe8d643cebb9e813937d86038'
-});
 
 const particleOptions = {
     fpsLimit: 120, 
@@ -99,26 +94,32 @@ class App extends Component {
 
   onButtonSubmit = () => {
     this.setState({imageURL: this.state.input});
-
-    app.models.predict(Clarifai.FACE_DETECT_MODEL, this.state.input)
-      .then(response => {
-        if (response){
-          fetch('http://localhost:3000/image', {
-            method: 'put',
+    fetch('http://localhost:3000/imageurl', {
+            method: 'post',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({
-              id: this.state.user.id
+              input: this.state.input
             })
+    })
+    .then(response => response.json())
+    .then(response => {
+      if (response){
+        fetch('http://localhost:3000/image', {
+          method: 'put',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({
+            id: this.state.user.id
           })
-          .then(response => response.json())
-          .then(count => {
-            this.setState(Object.assign(this.state.user, {entries: count}))
-          })
-          .catch(err => console.log(err));
-        }
-        this.displayFaceBox(this.calculateFaceLocation(response))
-      })
-      .catch(err => console.log('clarifai error:',err));
+        })
+        .then(response => response.json())
+        .then(count => {
+          this.setState(Object.assign(this.state.user, {entries: count}))
+        })
+        .catch(err => console.log(err));
+      }
+      this.displayFaceBox(this.calculateFaceLocation(response))
+    })
+    .catch(err => console.log('clarifai error:',err));
   }
 
   onRouteChange = (route) => {
